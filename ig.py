@@ -1,9 +1,9 @@
 import requests, json, validators
-from parameters import parameters
-from bs4 import BeautifulSoup
 from pprint import pprint
 from random import choice
-from exceptions import ShortCodeException
+from otypes.user import User
+from exceptions.common import ShortCodeException, UsernameException
+from utilities.parameters import parameters
 
 _user_agents = ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36']
 
@@ -27,13 +27,6 @@ class InstagramScraper:
 		except requests.RequestException:
 			raise requests.RequestException
 		return response.text
-
-	def extract_json_data(self, html):
-		soup = BeautifulSoup(html, 'html.parser')
-		body = soup.find('body')
-		script_tag = body.find('script')
-		raw_string = script_tag.text.strip().replace('window._sharedData =', '').replace(';', '')
-		return json.loads(raw_string)
 
 	def get_variables(self, params):
 		return str({pmt:params[pmt] for pmt in params if params[pmt] != ''}).strip().replace(" ", "").replace("'", '"').replace("True", "true").replace("False", "false")
@@ -78,54 +71,52 @@ class InstagramScraper:
 
 		variables = self.get_variables(params['variables'])
 		query_url = self.base_url % (params['query_hash'], variables)
-		print(query_url)
+		
 		return query_url
 
-	def get_user_posts(self, profile_url, max_requests=5):
-		nodes = []
-		after = ''
-		current_iteration = 0
-		
+	def get_user(self, profile_url):
+		user = {}
 		try:
 			response  = self.__request_url(self.create_url_user(profile_url))
-			json_data = json.loads(response)
-			user  = json_data['graphql']['user']
-			id    = user['id']
-			posts = user['edge_owner_to_timeline_media']
-			has_next_page = posts['page_info']['has_next_page']
+			data      = json.loads(response)
+			user      = User(data['graphql']['user'])
+		except Exception as e:
+			raise e
+		return user
+
+	def get_user_posts(self, profile_url, user={}, max_requests=5):
+		try:
+			if not user:
+				response  = self.__request_url(self.create_url_user(profile_url))
+				data      = json.loads(response)
+				user      = User(data['graphql']['user'])
 			
-			if user['is_private']:
+			if user.is_private:
 				print("Private profile :(")
 			else:
-				for current in posts['edges']:
-					nodes.append(current['node'])
-	
+				iteration = 0
 				while True:
-					current_iteration += 1
+					iteration += 1
 
-					if not has_next_page or current_iteration is max_requests:
+					if not user.has_next_page or iteration is max_requests:
+						print("this user ran out of posts")
 						break
 					else:
-						after     = posts['page_info']['end_cursor']
-						response  = self.__request_url(self.create_url_user(profile_url, id, after))
-						json_data = json.loads(response)['data']['user']
-						posts     = json_data['edge_owner_to_timeline_media']
-						has_next_page = posts['page_info']['has_next_page']
-
-						for current in posts['edges']:
-							nodes.append(current['node'])
+						response  = self.__request_url(self.create_url_user(profile_url, user.id, user.end_cursor))
+						data      = json.loads(response)
+						user.add_posts(data['data']['user'])
 
 		except Exception as e:
 			raise e
 
-		return nodes
+		return user.posts
 
 	def get_single_post(self, post_url):
 		post = {}
 		try:
 			response  = self.__request_url(self.create_url_single_post(post_url))
-			json_data = json.loads(response)
-			post = json_data['data']['shortcode_media']
+			data = json.loads(response)
+			post = Post(data['data']['shortcode_media'])
 		except Exception as e:
 			raise e
 
@@ -134,21 +125,21 @@ class InstagramScraper:
 	def get_post_likes(self, post_url, max_requests=5):
 		nodes = []
 		after = ''
-		current_iteration = 0
 
 		try:
+			iteration = 0
 			while True:
 				response   = self.__request_url(self.create_url_likes(post_url, after))
-				json_data  = json.loads(response)['data']['shortcode_media']['edge_liked_by']
-				current_iteration += 1
+				data       = json.loads(response)['data']['shortcode_media']['edge_liked_by']
+				iteration += 1
 
-				for edge in json_data['edges']:
+				for edge in data['edges']:
 					nodes.append(edge['node'])
 
-				if not json_data['page_info']['has_next_page'] or current_iteration is max_requests:
+				if not data['page_info']['has_next_page'] or iteration is max_requests:
 					break
 				else:
-					after = json_data['page_info']['end_cursor']
+					after = data['page_info']['end_cursor']
 
 		except Exception as e:
 			raise e
@@ -170,6 +161,6 @@ class InstagramScraper:
 
 
 i = InstagramScraper()
-# i.get_user_posts("https://www.instagram.com/selenagomez/")
+i.get_user_posts("https://www.instagram.com/pedroool/")
 # i.get_single_post("http://www.instagram.com/p/BwC3-fwH2dZ/")
 # i.check_users_liked("http://www.instagram.com/p/BwC3-fwH2dZ/", ['crovaz', 'andresraul7', 'roxanadpc', 'pedroool'])
