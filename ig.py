@@ -1,12 +1,9 @@
 import requests, json, validators
-# import parameters, helpers
 from parameters import parameters
 from bs4 import BeautifulSoup
 from pprint import pprint
 from random import choice
 from exceptions import ShortCodeException
-
-# p = helpers.Parameters(parameters.data)
 
 _user_agents = ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36']
 
@@ -15,7 +12,6 @@ class InstagramScraper:
 		self.user_agents = user_agents
 		self.proxy       = proxy
 		self.base_url    = "https://www.instagram.com/graphql/query/?query_hash=%s&variables=%s"
-		# self.parameters = helpers.Parameters(parameters.data)
 
 	def __random_agent(self):
 		if self.user_agents and isinstance(self.user_agents, list):
@@ -125,21 +121,15 @@ class InstagramScraper:
 		return nodes
 
 	def get_single_post(self, post_url):
-		results = {}
+		post = {}
 		try:
 			response  = self.__request_url(self.create_url_single_post(post_url))
 			json_data = json.loads(response)
+			post = json_data['data']['shortcode_media']
 		except Exception as e:
 			raise e
 
-		# for key, value in metrics.items():
-		# 	if key != 'edge_owner_to_timeline_media':
-		# 		if value and isinstance(value, dict):
-		# 			value = value['count']
-		# 			results[key] = value
-		# 		elif value:
-		# 			results[key] = value
-		# return results
+		return post
 
 	def get_post_likes(self, post_url, max_requests=5):
 		nodes = []
@@ -180,5 +170,6 @@ class InstagramScraper:
 
 
 i = InstagramScraper()
-i.get_user_posts("https://www.instagram.com/selenagomez/")
+# i.get_user_posts("https://www.instagram.com/selenagomez/")
+# i.get_single_post("http://www.instagram.com/p/BwC3-fwH2dZ/")
 # i.check_users_liked("http://www.instagram.com/p/BwC3-fwH2dZ/", ['crovaz', 'andresraul7', 'roxanadpc', 'pedroool'])
