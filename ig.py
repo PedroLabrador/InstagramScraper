@@ -43,12 +43,28 @@ class InstagramScraper:
 		return str({pmt:params[pmt] for pmt in params if params[pmt] != ''}).strip().replace(" ", "").replace("'", '"').replace("True", "true").replace("False", "false")
 
 	def parse_url_or_username(self, url):
-		pass
+		if not validators.url(url):
+			raise UsernameException ("Username error - Invalid URL")
+		return "%s/?__a=1" % url if not url.endswith("/") else "%s?__a=1" % url
 
 	def parse_url_or_shortcode(self, url):
 		if not validators.url(url):
 			raise ShortCodeException("ShortCode error - Invalid URL")
 		return url.split('/')[4]
+
+	def create_url_user(self, url, id='', after=''):
+		params = parameters['user']
+
+		if not id:
+			return self.parse_url_or_username(url)
+		else:
+			params['variables']['id']    = id
+			params['variables']['after'] = after
+
+			variables = self.get_variables(params['variables'])
+			query_url = self.base_url % (params['query_hash'], variables)
+
+			return query_url
 
 	def create_url_single_post(self, url):
 		params = parameters['single_post']
@@ -68,6 +84,45 @@ class InstagramScraper:
 		query_url = self.base_url % (params['query_hash'], variables)
 		print(query_url)
 		return query_url
+
+	def get_user_posts(self, profile_url, max_requests=5):
+		nodes = []
+		after = ''
+		current_iteration = 0
+		
+		try:
+			response  = self.__request_url(self.create_url_user(profile_url))
+			json_data = json.loads(response)
+			user  = json_data['graphql']['user']
+			id    = user['id']
+			posts = user['edge_owner_to_timeline_media']
+			has_next_page = posts['page_info']['has_next_page']
+			
+			if user['is_private']:
+				print("Private profile :(")
+			else:
+				for current in posts['edges']:
+					nodes.append(current['node'])
+	
+				while True:
+					current_iteration += 1
+
+					if not has_next_page or current_iteration is max_requests:
+						break
+					else:
+						after     = posts['page_info']['end_cursor']
+						response  = self.__request_url(self.create_url_user(profile_url, id, after))
+						json_data = json.loads(response)['data']['user']
+						posts     = json_data['edge_owner_to_timeline_media']
+						has_next_page = posts['page_info']['has_next_page']
+
+						for current in posts['edges']:
+							nodes.append(current['node'])
+
+		except Exception as e:
+			raise e
+
+		return nodes
 
 	def get_single_post(self, post_url):
 		results = {}
@@ -111,7 +166,19 @@ class InstagramScraper:
 		return nodes
 
 	def check_users_liked(self, post_url, users):
-		pass
+		nodes = self.get_post_likes(post_url)
+		for user in users:
+			liked = False
+			for node in nodes:
+				if user == node['username']:
+					liked = True
+					break
+			if not liked:
+				print("User: %s did not like the photo" % user)
+			else:
+				print("User: %s did like the photo" % user)
+
 
 i = InstagramScraper()
-i.check_users_liked("http://www.instagram.com/p/BwC3-fwH2dZ/")
+i.get_user_posts("https://www.instagram.com/selenagomez/")
+# i.check_users_liked("http://www.instagram.com/p/BwC3-fwH2dZ/", ['crovaz', 'andresraul7', 'roxanadpc', 'pedroool'])

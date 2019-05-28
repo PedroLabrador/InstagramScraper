@@ -3,7 +3,7 @@ parameters = {
 		'query_hash': 'f2405b236d85e8296cf30347c9f08c2a',
 		'variables': {
 			'id': '',
-			'first': 12,
+			'first': 50,
 			'after': ''
 		}
 	},
