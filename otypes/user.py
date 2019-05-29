@@ -1,5 +1,5 @@
 import json
-from .post import Post
+from otypes.post       import Post
 from utilities.extras  import create_url_user
 from utilities.request import Request
 
@@ -9,7 +9,7 @@ class User:
 		self.username                  = user['username']
 		self.biography                 = user['biography']
 		self.full_name                 = user['full_name']
-		self.profile_url               = 'https://instagram.com/%s' % (user['username'])
+		self.profile_url               = 'https://instagram.com/%s/' % (user['username'])
 		self.has_channel               = user['has_channel']
 		self.external_url              = user['external_url']
 		self.external_url_linkshimmed  = user['external_url_linkshimmed']
@@ -53,18 +53,43 @@ class User:
 			if post.shortcode is shortcode:
 				return post
 
-	def get_posts_request(self, max_requests=5):
+	def get_info(self):
+		info = (
+			"Username:    @%s\n"
+			"Biography:   %s\n"
+			"Full Name:   %s\n"
+			"Profile url: %s\n"
+			"Followers:   %s\n"
+			"Following:   %s\n"
+		) % (
+			self.username,
+			self.biography,
+			self.full_name,
+			self.profile_url,
+			self.edge_followed_by,
+			self.edge_follow
+		)
+		return info
+
+	def status(self):
+		return ({
+			'post_count':    self.post_count,
+			'scraped_posts': len(self.posts),
+			'has_next_page': self.has_next_page
+		})
+
+	def get_posts_request(self, max_requests=5, aggresive=False):
 		try:
 			if self.is_private:
-				print("Private profile :( cannot retreive posts")
+				print("Private profile :(\nCannot retrieve posts")
 			else:
 				iteration = 0
 				while True:
-					iteration += 1
-
-					if not self.has_next_page or iteration is max_requests:
+					print("[Request #%s] %s" % (iteration, self.status()), end="\r", flush=True)
+					if not self.has_next_page or (iteration is max_requests and not aggresive):
 						break
 					else:
+						iteration += 1
 						response  = Request().url(create_url_user(self.profile_url, self.id, self.end_cursor))
 						data      = json.loads(response)['data']['user']['edge_owner_to_timeline_media']
 
@@ -73,6 +98,6 @@ class User:
 
 						for edge in data['edges']:
 							self.posts.append(Post(edge['node']))
-
+				print("status posts: %s" % self.status())
 		except Exception as e:
 			raise e
