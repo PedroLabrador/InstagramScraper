@@ -1,4 +1,7 @@
+import json
 from .post import Post
+from utilities.extras  import create_url_user
+from utilities.request import Request
 
 class User:
 	def __init__(self, user):
@@ -38,8 +41,38 @@ class User:
 			Post(post['node']) for post in user['edge_owner_to_timeline_media']['edges']
 		]
 
-	def add_posts(self, user):
-		self.has_next_page = user['edge_owner_to_timeline_media']['page_info']['has_next_page']
-		self.end_cursor    = user['edge_owner_to_timeline_media']['page_info']['end_cursor']
-		for post in user['edge_owner_to_timeline_media']['edges']
-			self.posts.append(Post(post['node']))
+	def __repr__(self):
+		return self.username
+
+	def __str__(self):
+		return self.username
+
+	def find_post(self, shortcode):
+		for current in posts:
+			post = current['node']
+			if post.shortcode is shortcode:
+				return post
+
+	def get_posts_request(self, max_requests=5):
+		try:
+			if self.is_private:
+				print("Private profile :( cannot retreive posts")
+			else:
+				iteration = 0
+				while True:
+					iteration += 1
+
+					if not self.has_next_page or iteration is max_requests:
+						break
+					else:
+						response  = Request().url(create_url_user(self.profile_url, self.id, self.end_cursor))
+						data      = json.loads(response)['data']['user']['edge_owner_to_timeline_media']
+
+						self.has_next_page = data['page_info']['has_next_page']
+						self.end_cursor    = data['page_info']['end_cursor']
+
+						for edge in data['edges']:
+							self.posts.append(Post(edge['node']))
+
+		except Exception as e:
+			raise e
