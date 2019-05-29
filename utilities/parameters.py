@@ -38,7 +38,7 @@ parameters = {
 		'query_hash': '97b41c52301f77ce508f55e66d17620e',
 		'variables': {
 			'shortcode': '',
-			'first': 14,
+			'first': 50,
 			'after': ''
 		}
 	},
@@ -62,7 +62,7 @@ parameters = {
 			'id': '',
 			'include_reel': True,
 			'fetch_mutual': False,
-			'first': 24,
+			'first': 50,
 			'after': ''
 		}
 	},
@@ -72,7 +72,7 @@ parameters = {
 			'id': '',
 			'include_reel': True,
 			'fetch_mutual': False,
-			'first': 24,
+			'first': 50,
 			'after': ''
 		}
 	},
