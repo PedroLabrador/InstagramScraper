@@ -48,9 +48,8 @@ class User:
 		return self.username
 
 	def find_post(self, shortcode):
-		for current in posts:
-			post = current['node']
-			if post.shortcode is shortcode:
+		for post in self.posts:
+			if shortcode == post.shortcode:
 				return post
 
 	def get_info(self):
@@ -101,3 +100,16 @@ class User:
 				print("status posts: %s" % self.status())
 		except Exception as e:
 			raise e
+
+	def get_likes_and_comments_request(self, max_requests=5, aggresive=False):
+		for post in self.posts:
+			if not post.edge_liked_by:
+				post.get_likes_request(max_requests, aggresive)
+			if not post.edge_comment_by:
+				post.get_comments_request(max_requests, aggresive)
+
+	def save_posts_to_json(self, all=False):
+		if self.posts:
+			with open(self.username + '_posts.json', 'w') as f:
+				json.dump([post.toJSON() for post in self.posts], f)
+			print("%s saved into the current directory" % self.username + '_posts.json')

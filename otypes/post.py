@@ -21,17 +21,15 @@ class Post:
 		self.gating_info                        = post['gating_info']
 		self.media_preview                      = post['media_preview']
 		self.edge_liked_by                      = []
-		self.edge_liked_by_count                = post['edge_liked_by']['count'] if 'edge_liked_by' in post else None
+		self.edge_liked_by_count                = post['edge_liked_by']['count'] if 'edge_liked_by' in post else post['edge_media_preview_like']['count'] if 'edge_media_preview_like' in post else None
 		self.has_next_page_likes                = ''
 		self.end_cursor_likes                   = ''
-		self.edge_media_preview_like            = post['edge_media_preview_like']['count'] if 'edge_media_preview_like' in post else None
 		self.edge_media_to_caption              = post['edge_media_to_caption']
 		self.edge_media_to_tagged_user          = post['edge_media_to_tagged_user'] if 'edge_media_to_tagged_user' in post else []
-		self.edge_media_preview_comment         = post['edge_media_preview_comment'] if 'edge_media_preview_comment' in 'post' else None
-		self.edge_media_to_sponsor_user         = post['edge_media_to_sponsor_user'] if 'edge_media_to_sponsor_user' in 'post' else None
+		self.edge_media_preview_comment         = post['edge_media_preview_comment'] if 'edge_media_preview_comment' in post else None
+		self.edge_media_to_sponsor_user         = post['edge_media_to_sponsor_user'] if 'edge_media_to_sponsor_user' in post else None
 		self.edge_comment_by                    = []
-		self.edge_comment_by_count              = post['edge_media_to_comment']['count'] if 'edge_media_to_comment' in post else None
-		self.edge_media_to_parent_comment_count = post['edge_media_to_parent_comment']['count'] if 'edge_media_to_parent_comment' in post else None
+		self.edge_comment_by_count              = post['edge_media_to_comment']['count'] if 'edge_media_to_comment' in post else post['edge_media_to_parent_comment']['count'] if 'edge_media_to_parent_comment' in post else None
 		self.has_next_page_comments             = ''
 		self.end_cursor_comments                = ''
 		self.thumbnail_src                      = post['thumbnail_src'] if 'thumbnail_src' in post else None
@@ -60,23 +58,23 @@ class Post:
 
 	def get_status_likes(self):
 		return ({
-			'liked_by_count':      self.edge_liked_by_count if self.edge_liked_by_count is not None else self.edge_media_preview_like,
+			'liked_by_count':      self.edge_liked_by_count,
 			'scraped_likes':       len(self.edge_liked_by),
 			'has_next_page_likes': self.has_next_page_likes
 		})
 
 	def get_status_comments(self):
 		return ({
-			'comment_by_count':       self.edge_comment_by_count if self.edge_comment_by_count is not None else self.edge_media_to_parent_comment_count,
+			'comment_by_count':       self.edge_comment_by_count,
 			'scraped_comments':       len(self.edge_comment_by),
 			'has_next_page_comments': self.has_next_page_comments
 		})
 
-	def get_post_likes_request(self, max_requests=5, aggresive=False):
+	def get_likes_request(self, max_requests=5, aggresive=False):
 		try:
 			iteration = 0
 			while True:
-				print("[Request #%s] %s" % (iteration, self.get_status_likes()), end="\r", flush=True)
+				print("%s: [Request #%s] %s" % (self.shortcode, iteration, self.get_status_likes()), end="\r", flush=True)
 				response   = Request().url(create_url_likes(self.post_url, self.end_cursor_likes))
 				data       = json.loads(response)['data']['shortcode_media']['edge_liked_by']
 				iteration += 1
@@ -89,16 +87,16 @@ class Post:
 
 				if not self.has_next_page_likes or (iteration is max_requests and not aggresive):
 					break
-			print("status likes: %s" % self.get_status_likes())
+			print("%s: status likes: %s" % (self.shortcode, self.get_status_likes()))
 		except Exception as e:
 			raise e
 
-	def get_post_comments_request(self, max_requests=5, aggresive=False):
+	def get_comments_request(self, max_requests=5, aggresive=False):
 		try:
 			if not self.comments_disabled:
 				iteration = 0
 				while True:
-					print("[Request #%s] %s" % (iteration, self.get_status_comments()), end="\r", flush=True)
+					print("%s: [Request #%s] %s" % (self.shortcode, iteration, self.get_status_comments()), end="\r", flush=True)
 					response   = Request().url(create_url_comments(self.post_url, self.end_cursor_comments))
 					data       = json.loads(response)['data']['shortcode_media']['edge_media_to_parent_comment']
 					iteration += 1
@@ -111,14 +109,14 @@ class Post:
 
 					if not self.has_next_page_comments or (iteration is max_requests and not aggresive):
 						break
-				print("status comments: %s" % self.get_status_comments())
+				print("%s: status comments: %s" % (self.shortcode, self.get_status_comments()))
 		except Exception as e:
 			raise e
 
 	def check_users_liked(self, users):
 		if isinstance(users, list):
 			if len(self.edge_liked_by) is 0:
-				self.get_post_likes_request()
+				self.get_likes_request()
 			for user in users:
 				liked = False
 				for like in self.edge_liked_by:
@@ -131,3 +129,24 @@ class Post:
 					print("User: %s liked the photo" % user)
 		else:
 			print("please use an array of users")
+
+	def toJSON(self):
+		return {
+			'id':          self.id,
+			'shortcode':   self.shortcode,
+			'post_url':    self.post_url,
+			'display_url': self.display_url,
+			'owner': {
+				'id':       self.owner_id,
+				'username': self.owner_username
+			},
+			'is_video':    self.is_video,
+			'edge_liked_by': {
+				'count':   self.edge_liked_by_count,
+				'edges':   [like.toJSON() for like in self.edge_liked_by]
+			},
+			'edge_comment_by': {
+				'count': self.edge_comment_by_count,
+				'edges': [comment.toJSON() for comment in self.edge_comment_by]
+			}
+		}
