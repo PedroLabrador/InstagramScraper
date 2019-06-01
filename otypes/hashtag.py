@@ -1,7 +1,7 @@
 import json
 from otypes.post       import Post
 from utilities.extras  import create_url_hashtag
-from utilities.request import Request
+from utilities.request import request
 
 class Hashtag:
 	def __init__(self, hashtag):
@@ -46,7 +46,7 @@ class Hashtag:
 					break
 				else:
 					iteration += 1
-					response  = Request().url(create_url_hashtag(self.hashtag_url, first, self.end_cursor))
+					response  = request.get(create_url_hashtag(self.hashtag_url, first, self.end_cursor))
 					data      = json.loads(response)['data']['hashtag']['edge_hashtag_to_media']
 
 					self.has_next_page = data['page_info']['has_next_page']

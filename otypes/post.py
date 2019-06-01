@@ -3,7 +3,7 @@ from otypes.comment       import Comment
 from otypes.like          import Like
 from otypes.tag           import Tag
 from utilities.parameters import parameters
-from utilities.request    import Request
+from utilities.request    import request
 from utilities.extras     import create_url_likes, create_url_comments, create_url_single_post
 
 class Post:
@@ -75,7 +75,7 @@ class Post:
 
 	def update_tags_request(self):
 		try:
-			response  = Request().url(create_url_single_post(self.post_url))
+			response  = request.get(create_url_single_post(self.post_url))
 			post      = json.loads(response)['data']['shortcode_media']
 			self.edge_media_to_tagged_user = [Tag(tag['node']['user']) for tag in post['edge_media_to_tagged_user']['edges']]			
 		except Exception as e:
@@ -86,7 +86,7 @@ class Post:
 			iteration = 0
 			while True:
 				print("%s: [Request #%s] %s" % (self.shortcode, iteration, self.get_status_likes()), end="\r", flush=True)
-				response   = Request().url(create_url_likes(self.post_url, self.end_cursor_likes))
+				response   = request.get(create_url_likes(self.post_url, self.end_cursor_likes))
 				data       = json.loads(response)['data']['shortcode_media']['edge_liked_by']
 				iteration += 1
 
@@ -108,7 +108,7 @@ class Post:
 				iteration = 0
 				while True:
 					print("%s: [Request #%s] %s" % (self.shortcode, iteration, self.get_status_comments()), end="\r", flush=True)
-					response   = Request().url(create_url_comments(self.post_url, self.end_cursor_comments))
+					response   = request.get(create_url_comments(self.post_url, self.end_cursor_comments))
 					data       = json.loads(response)['data']['shortcode_media']['edge_media_to_parent_comment']
 					iteration += 1
 

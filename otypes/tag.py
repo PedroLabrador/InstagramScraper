@@ -1,5 +1,5 @@
 import json
-from utilities.request import Request
+from utilities.request import request
 from utilities.extras  import create_url_user
 
 class TaggedUser:
@@ -61,7 +61,7 @@ class Tag:
 	def check_profile(self):
 		try:
 			print("Checking %s profile               " % self.username, end="\r", flush=True)
-			response     = Request().url(create_url_user(self.profile_url))
+			response     = request.get(create_url_user(self.profile_url))
 			data         = json.loads(response)
 			self.user    = TaggedUser(data['graphql']['user'])
 		except Exception as e:

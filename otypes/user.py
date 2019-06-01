@@ -1,7 +1,7 @@
 import json
 from otypes.post       import Post
 from utilities.extras  import create_url_user
-from utilities.request import Request
+from utilities.request import request
 
 class User:
 	def __init__(self, user, reset_posts=False):
@@ -97,7 +97,7 @@ class User:
 						break
 					else:
 						iteration += 1
-						response  = Request().url(create_url_user(self.profile_url, self.id, self.end_cursor))
+						response  = request.get(create_url_user(self.profile_url, self.id, self.end_cursor))
 						data      = json.loads(response)['data']['user']['edge_owner_to_timeline_media']
 
 						self.has_next_page = data['page_info']['has_next_page']
