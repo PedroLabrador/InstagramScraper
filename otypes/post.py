@@ -1,31 +1,34 @@
 import json
 from otypes.comment       import Comment
 from otypes.like          import Like
+from otypes.tag           import Tag
 from utilities.parameters import parameters
 from utilities.request    import Request
-from utilities.extras     import create_url_likes, create_url_comments
+from utilities.extras     import create_url_likes, create_url_comments, create_url_single_post
 
 class Post:
 	def __init__(self, post):
 		self.id                                 = post['id']
-		self.owner_id                           = post['owner']['id']
-		self.owner_username                     = post['owner']['username']
+		self.owner_id                           = post['owner']['id'] if 'id' in post['owner'] else ''
+		self.owner_username                     = post['owner']['username'] if 'username' in post['owner'] else ''
 		self.shortcode                          = post['shortcode']
 		self.post_url                           = "https://instagram.com/p/%s/" % (post['shortcode'])
 		self.display_url                        = post['display_url']
 		self.display_resources                  = post['display_resources'] if 'display_resources' in post else None
-		self.location                           = post['location']
+		self.location                           = post['location'] if 'location' in post else ''
 		self.is_video                           = post['is_video']
 		self.dimensions_width                   = post['dimensions']['width']
 		self.dimensions_height                  = post['dimensions']['height']
-		self.gating_info                        = post['gating_info']
-		self.media_preview                      = post['media_preview']
+		self.gating_info                        = post['gating_info'] if 'gating_info' in post else ''
+		self.media_preview                      = post['media_preview'] if 'gating_info' in post else ''
 		self.edge_liked_by                      = []
 		self.edge_liked_by_count                = post['edge_liked_by']['count'] if 'edge_liked_by' in post else post['edge_media_preview_like']['count'] if 'edge_media_preview_like' in post else None
 		self.has_next_page_likes                = ''
 		self.end_cursor_likes                   = ''
 		self.edge_media_to_caption              = post['edge_media_to_caption']
-		self.edge_media_to_tagged_user          = post['edge_media_to_tagged_user'] if 'edge_media_to_tagged_user' in post else []
+		self.edge_media_to_tagged_user          = [
+			Tag(tag['node']['user']) for tag in post['edge_media_to_tagged_user']['edges']
+		] if 'edge_media_to_tagged_user' in post else []
 		self.edge_media_preview_comment         = post['edge_media_preview_comment'] if 'edge_media_preview_comment' in post else None
 		self.edge_media_to_sponsor_user         = post['edge_media_to_sponsor_user'] if 'edge_media_to_sponsor_user' in post else None
 		self.edge_comment_by                    = []
@@ -69,6 +72,14 @@ class Post:
 			'scraped_comments':       len(self.edge_comment_by),
 			'has_next_page_comments': self.has_next_page_comments
 		})
+
+	def update_tags_request(self):
+		try:
+			response  = Request().url(create_url_single_post(self.post_url))
+			post      = json.loads(response)['data']['shortcode_media']
+			self.edge_media_to_tagged_user = [Tag(tag['node']['user']) for tag in post['edge_media_to_tagged_user']['edges']]			
+		except Exception as e:
+			raise e
 
 	def get_likes_request(self, max_requests=5, aggresive=False):
 		try:
@@ -136,17 +147,21 @@ class Post:
 			'shortcode':   self.shortcode,
 			'post_url':    self.post_url,
 			'display_url': self.display_url,
+			'is_video':    self.is_video,
 			'owner': {
 				'id':       self.owner_id,
 				'username': self.owner_username
 			},
-			'is_video':    self.is_video,
 			'edge_liked_by': {
-				'count':   self.edge_liked_by_count,
-				'edges':   [like.toJSON() for like in self.edge_liked_by]
+				'count': self.edge_liked_by_count,
+				'edges': [like.toJSON() for like in self.edge_liked_by]
 			},
 			'edge_comment_by': {
 				'count': self.edge_comment_by_count,
 				'edges': [comment.toJSON() for comment in self.edge_comment_by]
-			}
+			},
+			'edge_media_to_tagged_user': {
+				'edges': [tag.toJSON() for tag in self.edge_media_to_tagged_user]
+			},
+			'accessibility_caption': self.accessibility_caption
 		}
