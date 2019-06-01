@@ -7,6 +7,14 @@ parameters = {
 			'after': ''
 		}
 	},
+	'hashtag': {
+		'query_hash': 'f92f56d47dc7a55b606908374b43a314',
+		'variables': {
+			'tag_name': '',
+			'first': 150,
+			'after': ''
+		}
+	},
 	'tag': {
 		'query_hash': 'ff260833edf142911047af6024eb634a',
 		'variables': {

@@ -3,3 +3,7 @@ class ShortCodeException(Exception):
 
 class UsernameException(Exception):
 	pass
+
+class TagnameException(Exception):
+	pass
+	

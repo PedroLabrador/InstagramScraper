@@ -1,6 +1,6 @@
 import validators
 from utilities.parameters import parameters
-from exceptions.common import ShortCodeException, UsernameException
+from exceptions.common import ShortCodeException, UsernameException, TagnameException
 
 base_url = "https://www.instagram.com/graphql/query/?query_hash=%s&variables=%s"
 
@@ -13,8 +13,14 @@ def parse_url_or_username(url):
 # Improve this method
 def parse_url_or_shortcode(url):
 	if not validators.url(url):
-		raise ShortCodeException("ShortCode error - Invalid URL")
+		raise ShortCodeException ("ShortCode error - Invalid URL")
 	return url.split('/')[4]
+
+#improve this method
+def parse_url_or_tagname(url):
+	if not validators.url(url):
+		raise TagnameException ("Tagname error - Invalid URL")
+	return url.split('/')[5]
 
 def get_variables(params):
 	return str({pmt:params[pmt] for pmt in params if params[pmt] != ''}).strip().replace(" ", "").replace("'", '"').replace("True", "true").replace("False", "false")
@@ -61,3 +67,15 @@ def create_url_comments(post_url, after=''):
 	query_url = base_url % (params['query_hash'], variables)
 	
 	return query_url
+
+def create_url_hashtag(hashtag_url, first='', after=''):
+	params = parameters['hashtag']
+	params['variables']['tag_name'] = parse_url_or_tagname(hashtag_url)
+	if first:
+		params['variables']['first'] = first
+	params['variables']['after']    = after
+
+	variables = get_variables(params['variables'])
+	query_url = base_url % (params['query_hash'], variables)
+	return query_url
+	

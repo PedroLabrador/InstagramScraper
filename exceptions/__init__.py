@@ -1,6 +1,7 @@
-from .common import ShortCodeException, UsernameException
+from .common import ShortCodeException, UsernameException, TagnameException
 
 __all__ = [
 	'ShortCodeException',
-	'UsernameException'
+	'UsernameException',
+	'TagnameException'
 ]
