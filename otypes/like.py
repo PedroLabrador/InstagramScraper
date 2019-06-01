@@ -1,5 +1,3 @@
-import json
-
 class Like:
 	def __init__(self, like):
 		self.id                  = like['id']
