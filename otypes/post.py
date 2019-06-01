@@ -1,10 +1,10 @@
 import json
-from otypes.comment       import Comment
-from otypes.like          import Like
-from otypes.tag           import Tag
-from utilities.parameters import parameters
-from utilities.request    import request
-from utilities.extras     import create_url_likes, create_url_comments, create_url_single_post
+from  .comment              import Comment
+from  .like                 import Like
+from  .tag                  import Tag
+from ..utilities.parameters import parameters
+from ..utilities.request    import request
+from ..utilities.extras     import create_url_likes, create_url_comments, create_url_single_post
 
 class Post:
 	def __init__(self, post):

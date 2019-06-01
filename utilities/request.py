@@ -1,8 +1,8 @@
 import requests, random
-from utilities.parameters import proxy_list, enable_proxy, _user_agents
-from random               import choice
-from fake_useragent       import UserAgent
-from bs4                  import BeautifulSoup
+from  bs4            import BeautifulSoup
+from  random         import choice
+from  fake_useragent import UserAgent
+from .parameters     import proxy_list, enable_proxy, _user_agents
 
 class Request:
 	def __init__(self):

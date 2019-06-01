@@ -1,7 +1,7 @@
 import json
-from otypes.post       import Post
-from utilities.extras  import create_url_user
-from utilities.request import request
+from  .post              import Post
+from ..utilities.extras  import create_url_user
+from ..utilities.request import request
 
 class User:
 	def __init__(self, user, reset_posts=False):

@@ -1,6 +1,6 @@
 import json
-from utilities.request import request
-from utilities.extras  import create_url_user
+from ..utilities.request import request
+from ..utilities.extras  import create_url_user
 
 class TaggedUser:
 	def __init__(self, user):

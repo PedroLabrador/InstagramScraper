@@ -1,6 +1,6 @@
 import validators
-from utilities.parameters import parameters
-from exceptions.common import ShortCodeException, UsernameException, TagnameException
+from  .parameters        import parameters
+from ..exceptions.common import ShortCodeException, UsernameException, TagnameException
 
 base_url = "https://www.instagram.com/graphql/query/?query_hash=%s&variables=%s"
 
