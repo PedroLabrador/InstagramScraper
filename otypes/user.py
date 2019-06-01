@@ -4,7 +4,7 @@ from utilities.extras  import create_url_user
 from utilities.request import Request
 
 class User:
-	def __init__(self, user):
+	def __init__(self, user, reset_posts=False):
 		self.id                        = user['id']
 		self.username                  = user['username']
 		self.biography                 = user['biography']
@@ -40,6 +40,14 @@ class User:
 		self.posts                     = [
 			Post(post['node']) for post in user['edge_owner_to_timeline_media']['edges']
 		]
+		self.reset_posts = reset_posts
+
+		# Deletes the already saved posts
+		if self.reset_posts:
+			self.posts.clear()
+			self.end_cursor    = ''
+			self.reset_posts   = False
+			self.has_next_page = True
 
 	def __repr__(self):
 		return self.username
@@ -100,6 +108,16 @@ class User:
 				print("status posts: %s" % self.status())
 		except Exception as e:
 			raise e
+
+	def retrieve_tagged_users(self):
+		tags      = []
+		usernames = []
+		for post in self.posts:
+			for tag in post.edge_media_to_tagged_user:
+				if not tag.username in usernames:
+					usernames.append(tag.username)
+					tags.append(tag)
+		return tags
 
 	def get_likes_and_comments_request(self, max_requests=5, aggresive=False):
 		for post in self.posts:
