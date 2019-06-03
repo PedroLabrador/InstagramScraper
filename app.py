@@ -1,5 +1,4 @@
 import json, requests
-from  pprint            import pprint
 from .otypes.user       import User
 from .otypes.post       import Post
 from .otypes.hashtag    import Hashtag

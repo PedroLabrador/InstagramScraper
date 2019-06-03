@@ -1,6 +1,6 @@
 _user_agents = ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36']
 
-enable_proxy = True
+enable_proxy = False
 
 proxy_list = [
 	{'ip': '138.197.108.5', 'port': '3128', 'https': 'yes', 'country': 'United States'}
