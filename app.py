@@ -14,7 +14,7 @@ class InstagramScraper:
 	def get_user_profile_request(self, profile_url='', reset_posts=True):
 		try:
 			response  = request.get(create_url_user(profile_url if profile_url else self.profile_url))
-			data      = json.loads(response)
+			data      = json.loads(response.text)
 			# Set to True, just to delete the current saved posts and request them again with more data :(
 			self.user = User(data['graphql']['user'], reset_posts)
 		except Exception as e:
@@ -25,7 +25,7 @@ class InstagramScraper:
 		post = {}
 		try:
 			response  = request.get(create_url_single_post(post_url))
-			data      = json.loads(response)
+			data      = json.loads(response.text)
 			post      = Post(data['data']['shortcode_media'])
 		except Exception as e:
 			raise e
@@ -35,7 +35,7 @@ class InstagramScraper:
 		hashtag = {}
 		try:
 			response  = request.get(create_url_hashtag(hashtag_url, first))
-			data      = json.loads(response)
+			data      = json.loads(response.text)
 			hashtag   = Hashtag(data['data']['hashtag'])
 			self.hashtags.append(hashtag)
 		except Exception as e:
