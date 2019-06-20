@@ -47,7 +47,7 @@ class Hashtag:
 				else:
 					iteration += 1
 					response  = request.get(create_url_hashtag(self.hashtag_url, first, self.end_cursor))
-					data      = json.loads(response)['data']['hashtag']['edge_hashtag_to_media']
+					data      = json.loads(response.text)['data']['hashtag']['edge_hashtag_to_media']
 
 					self.has_next_page = data['page_info']['has_next_page']
 					self.end_cursor    = data['page_info']['end_cursor']

@@ -62,7 +62,7 @@ class Tag:
 		try:
 			print("Checking %s profile               " % self.username, end="\r", flush=True)
 			response     = request.get(create_url_user(self.profile_url))
-			data         = json.loads(response)
+			data         = json.loads(response.text)
 			self.user    = TaggedUser(data['graphql']['user'])
 		except Exception as e:
 			raise e

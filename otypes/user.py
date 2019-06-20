@@ -1,6 +1,6 @@
 import json
 from  .post              import Post
-from ..utilities.extras  import create_url_user
+from ..utilities.extras  import create_url_user, create_url_single_post
 from ..utilities.request import request
 
 class User:
@@ -98,7 +98,7 @@ class User:
 					else:
 						iteration += 1
 						response  = request.get(create_url_user(self.profile_url, self.id, self.end_cursor))
-						data      = json.loads(response)['data']['user']['edge_owner_to_timeline_media']
+						data      = json.loads(response.text)['data']['user']['edge_owner_to_timeline_media']
 
 						self.has_next_page = data['page_info']['has_next_page']
 						self.end_cursor    = data['page_info']['end_cursor']
@@ -108,6 +108,21 @@ class User:
 				print("status posts: %s" % self.status())
 		except Exception as e:
 			raise e
+
+		return self.posts
+
+	def get_posts_videos_request(self):
+		try:
+			for post in self.posts:
+				if post.is_video:
+					print("[Requesting Video Post %s]" % (post.shortcode), end="\r", flush=True)
+					response = request.get(create_url_single_post(post.post_url))
+					data     = json.loads(response.text)
+					post.update_video_data(data['data']['shortcode_media'])
+		except Exception as e:
+			raise e
+
+		return [post for post in self.posts if post.is_video]
 
 	def retrieve_tagged_users(self):
 		tags      = []
