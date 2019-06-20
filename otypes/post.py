@@ -1,4 +1,5 @@
-import json
+import json, os
+from clint.textui           import progress
 from  .comment              import Comment
 from  .like                 import Like
 from  .tag                  import Tag
@@ -21,6 +22,10 @@ class Post:
 		self.dimensions_height                  = post['dimensions']['height']
 		self.gating_info                        = post['gating_info'] if 'gating_info' in post else ''
 		self.media_preview                      = post['media_preview'] if 'gating_info' in post else ''
+		self.dash_info                          = post['dash_info'] if 'dash_info' in post else ''
+		self.video_url                          = post['video_url'] if 'video_url' in post else ''
+		self.video_view_count                   = post['video_view_count'] if 'video_view_count' in post else ''
+		self.video_duration                     = post['video_duration'] if 'video_duration' in post else ''
 		self.edge_liked_by                      = []
 		self.edge_liked_by_count                = post['edge_liked_by']['count'] if 'edge_liked_by' in post else post['edge_media_preview_like']['count'] if 'edge_media_preview_like' in post else None
 		self.has_next_page_likes                = ''
@@ -50,6 +55,10 @@ class Post:
 		self.viewer_in_photo_of_you             = post['viewer_in_photo_of_you'] if 'viewer_in_photo_of_you' in post else None
 		self.viewer_can_reshare                 = post['viewer_can_reshare'] if 'viewer_can_reshare' in post else None
 		self.is_ad                              = post['is_ad'] if 'is_ad' in post else None
+		self.encoding_status                    = post['encoding_status'] if 'encoding_status' in post else ''
+		self.is_published                       = post['is_published'] if 'is_published' in post else ''
+		self.product_type                       = post['product_type'] if 'product_type' in post else ''
+		self.title                              = post['title'] if 'title' in post else ''
 		self.edge_web_media_to_related_media    = post['edge_web_media_to_related_media'] if 'edge_web_media_to_related_media' in post else None
 		self.__typename                         = post['__typename']
 
@@ -76,7 +85,7 @@ class Post:
 	def update_tags_request(self):
 		try:
 			response  = request.get(create_url_single_post(self.post_url))
-			post      = json.loads(response)['data']['shortcode_media']
+			post      = json.loads(response.text)['data']['shortcode_media']
 			self.edge_media_to_tagged_user = [Tag(tag['node']['user']) for tag in post['edge_media_to_tagged_user']['edges']]			
 		except Exception as e:
 			raise e
@@ -87,7 +96,7 @@ class Post:
 			while True:
 				print("%s: [Request #%s] %s" % (self.shortcode, iteration, self.get_status_likes()), end="\r", flush=True)
 				response   = request.get(create_url_likes(self.post_url, self.end_cursor_likes))
-				data       = json.loads(response)['data']['shortcode_media']['edge_liked_by']
+				data       = json.loads(response.text)['data']['shortcode_media']['edge_liked_by']
 				iteration += 1
 
 				self.has_next_page_likes = data['page_info']['has_next_page']
@@ -109,7 +118,7 @@ class Post:
 				while True:
 					print("%s: [Request #%s] %s" % (self.shortcode, iteration, self.get_status_comments()), end="\r", flush=True)
 					response   = request.get(create_url_comments(self.post_url, self.end_cursor_comments))
-					data       = json.loads(response)['data']['shortcode_media']['edge_media_to_parent_comment']
+					data       = json.loads(response.text)['data']['shortcode_media']['edge_media_to_parent_comment']
 					iteration += 1
 
 					self.has_next_page_comments = data['page_info']['has_next_page']
@@ -141,13 +150,45 @@ class Post:
 		else:
 			print("please use an array of users")
 
+	def update_video_data(self, data):
+		self.dash_info        = data['dash_info']
+		self.video_url        = data['video_url']
+		self.video_view_count = data['video_view_count']
+		self.video_duration   = data['video_duration']
+
+	def download_post(self):
+		if self.is_video:
+			try:
+				if not os.path.exists('videos'):
+					os.mkdir('videos')
+					if not os.path.exists('videos/%s' % self.owner_username):
+						os.mkdir('videos/%s' % self.owner_username)
+				with open(("videos/%s/%s.mp4" % (self.owner_username, self.shortcode)), "wb") as f:
+					print("[Downloading Video %s]" % (self.shortcode))
+					response     = request.get(self.video_url, stream=True)
+					total_length = int(response.headers.get('content-length'))
+
+					for chunk in progress.bar(response.iter_content(chunk_size=1024), expected_size=(total_length / 1024) + 1): 
+						if chunk:
+							f.write(chunk)
+							f.flush()
+
+					print('\x1b[1A%s%s.mp4 Downloaded' % ('-' * 60, self.shortcode))
+			except Exception as e:
+				raise e
+		else:
+			print("dont know what to do here yet i guess call toJson method")
+
 	def toJSON(self):
 		return {
-			'id':          self.id,
-			'shortcode':   self.shortcode,
-			'post_url':    self.post_url,
-			'display_url': self.display_url,
-			'is_video':    self.is_video,
+			'id':               self.id,
+			'shortcode':        self.shortcode,
+			'post_url':         self.post_url,
+			'display_url':      self.display_url,
+			'is_video':         self.is_video,
+			'video_url':        self.video_url,
+			'video_view_count': self.video_view_count,
+			'video_duration':   self.video_duration,
 			'owner': {
 				'id':       self.owner_id,
 				'username': self.owner_username
