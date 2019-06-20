@@ -43,12 +43,12 @@ class Request:
 	def __get_proxy(self):
 		return self.proxy['ip'] + ':' + self.proxy['port']
 
-	def get(self, url):
+	def get(self, url, stream=False):
 		try:
 			if self.enable_proxy:
 				headers  = {'User-Agent': self.__random_agent()}
 				proxies  = {'http':  self.__get_proxy(), 'https': self.__get_proxy()}
-				response = requests.get(url, headers=headers, proxies=proxies)
+				response = requests.get(url, stream=stream, headers=headers, proxies=proxies)
 			else:
 				response = requests.get(url, headers={'User-Agent': self.__random_agent()})
 			response.raise_for_status()
@@ -56,7 +56,7 @@ class Request:
 			raise requests.HTTPError('Received non 200 status code from Instagram')
 		except requests.RequestException as r:
 			raise requests.RequestException
-		return response.text
+		return response
 
 
 request = Request()
