@@ -1,34 +1,54 @@
-import requests, random
+import requests, random, json
 from  bs4            import BeautifulSoup
 from  random         import choice
 from  fake_useragent import UserAgent
-from .parameters     import proxy_list, enable_proxy, _user_agents
+from .parameters     import parameters_proxy_list, default_option, enable_proxy, api_url_proxy_list, url_sslproxies, _user_agents
 
 class Request:
 	def __init__(self):
 		self.user_agents   = _user_agents
 		self.proxy         = None
-		self.proxies       = proxy_list
+		self.proxies       = parameters_proxy_list
 		self.proxy_index   = -1
 		self.enable_proxy  = enable_proxy
 
 		if enable_proxy:
 			print("Proxies enabled")
-			self.select_proxy()
+			self.get_proxy_list(default_option)
 
-	# scrapes a list of free proxies from https://www.sslproxies.org/
-	def get_proxy_list(self):
-		response       = requests.get('https://www.sslproxies.org/', headers={'User-Agent': UserAgent().random})
-		soup           = BeautifulSoup(response.content, 'html.parser')
-		proxylisttable = soup.find(id='proxylisttable')
-		for row in proxylisttable.tbody.find_all('tr'):
-			self.proxies.append({
-				'ip':      row.find_all('td')[0].string,
-				'port':    row.find_all('td')[1].string,
-				'https':   row.find_all('td')[6].string,
-				'country': row.find_all('td')[3].string
-			})
+	def get_proxy_list(self, default=0):
+		# scrapes a list of free proxies from https://www.sslproxies.org/
+		if default is 1:
+			print("Retrieving list of free proxies from https://www.sslproxies.org/")
+			response       = requests.get(url_sslproxies, headers={'User-Agent': UserAgent().random})
+			soup           = BeautifulSoup(response.content, 'html.parser')
+			proxylisttable = soup.find(id='proxylisttable')
+			self.proxies.clear()
+			for row in proxylisttable.tbody.find_all('tr'):
+				self.proxies.append({
+					'ip':      row.find_all('td')[0].string,
+					'port':    row.find_all('td')[1].string,
+					'country': row.find_all('td')[3].string
+				})
+		# get a list of free proxies from https://www.proxy-list.download/api/v1/
+		elif default is 2:
+			print("Retrieving list of free proxies from https://www.proxy-list.download/ API")
+			response     = requests.get(api_url_proxy_list, headers={'User-Agent': UserAgent().random})
+			proxies_list = response.text.replace('\r', '').strip().split('\n')
+			self.proxies.clear()
+			for proxy in proxies_list:
+				tokens = proxy.split(':')
+				self.proxies.append({
+					'ip':      tokens[0],
+					'port':    tokens[1],
+					'country': 'United States'
+				})
+		else:
+			print("Using default proxy list from config")
+			self.proxies = parameters_proxy_list
+
 		self.select_proxy()
+		return self.proxies
 
 	def __random_agent(self):
 		if self.user_agents and isinstance(self.user_agents, list):
@@ -38,14 +58,14 @@ class Request:
 	def select_proxy(self, status=False):
 		self.proxy_index = random.randint(0, len(self.proxies) - 1)
 		self.proxy       = self.proxies[self.proxy_index]
-		print("%sCurrent proxy: %s:%s Https: %s Country: %s %s" % (
-			'' if not (status) else '[Changing proxy] -> ',
+		print("%sCurrent proxy: %s:%s Country: %s %s" % (
+			'' if not (status) else '[Switching proxy] -> ',
 			self.proxy['ip'],
 			self.proxy['port'],
-			self.proxy['https'],
 			self.proxy['country'],
 			' ' * 30)
 		)
+		return self.proxy
 
 	def __get_proxy(self):
 		return self.proxy['ip'] + ':' + self.proxy['port']
