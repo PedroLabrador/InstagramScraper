@@ -13,9 +13,8 @@ class Request:
 		self.enable_proxy  = enable_proxy
 
 		if enable_proxy:
-			self.__select_proxy()
 			print("Proxies enabled")
-			print("current proxy: %s:%s https: %s country: %s" % (self.proxy['ip'], self.proxy['port'], self.proxy['https'], self.proxy['country']))
+			self.select_proxy()
 
 	# scrapes a list of free proxies from https://www.sslproxies.org/
 	def get_proxy_list(self):
@@ -29,19 +28,30 @@ class Request:
 				'https':   row.find_all('td')[6].string,
 				'country': row.find_all('td')[3].string
 			})
-		self.__select_proxy()
+		self.select_proxy()
 
 	def __random_agent(self):
 		if self.user_agents and isinstance(self.user_agents, list):
 			return choice(self.user_agents)
 		return choice(_user_agents)
 
-	def __select_proxy(self):
+	def select_proxy(self, status=False):
 		self.proxy_index = random.randint(0, len(self.proxies) - 1)
 		self.proxy       = self.proxies[self.proxy_index]
+		print("%sCurrent proxy: %s:%s Https: %s Country: %s %s" % (
+			'' if not (status) else '[Changing proxy] -> ',
+			self.proxy['ip'],
+			self.proxy['port'],
+			self.proxy['https'],
+			self.proxy['country'],
+			' ' * 30)
+		)
 
 	def __get_proxy(self):
 		return self.proxy['ip'] + ':' + self.proxy['port']
+
+	def is_enabled_proxy(self):
+		return self.enable_proxy
 
 	def get(self, url, stream=False):
 		try:
