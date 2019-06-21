@@ -1,9 +1,15 @@
 _user_agents = ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36']
 
-enable_proxy = False
+default_option = 2
 
-proxy_list = [
-	{'ip': '138.197.108.5', 'port': '3128', 'https': 'yes', 'country': 'United States'}
+enable_proxy = True
+
+url_sslproxies     = 'https://www.sslproxies.org/'
+api_url_proxy_list = 'https://www.proxy-list.download/api/v1/get?type=http&country=US'
+
+parameters_proxy_list = [
+	{'ip': '173.199.115.194', 'port': '8080', 'country': 'United States'},
+	{'ip': '177.92.160.254', 'port': '54868', 'country': 'Brazil'}
 ]
 
 parameters = {
