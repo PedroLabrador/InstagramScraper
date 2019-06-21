@@ -109,22 +109,27 @@ class User:
 		except Exception as e:
 			if request.is_enabled_proxy():
 				request.select_proxy(status=True)
-				self.get_posts_request(max_requests, aggresive, iteration)
+				self.get_posts_request(max_requests, aggresive, iteration-1)
 			else:
 				raise e
 
 		return self.posts
 
-	def get_posts_videos_request(self):
+	def get_posts_videos_request(self, videos=[]):
 		try:
 			for post in self.posts:
-				if post.is_video:
+				if post.is_video and post.shortcode not in videos:
 					print("[Requesting Video Post %s]" % (post.shortcode), end="\r", flush=True)
 					response = request.get(create_url_single_post(post.post_url))
 					data     = json.loads(response.text)
 					post.update_video_data(data['data']['shortcode_media'])
+					videos.append(post.shortcode)
 		except Exception as e:
-			raise e
+			if request.is_enabled_proxy():
+				request.select_proxy(status=True)
+				self.get_posts_videos_request(videos)
+			else:
+				raise e
 
 		return [post for post in self.posts if post.is_video]
 
@@ -149,4 +154,4 @@ class User:
 		if self.posts:
 			with open(self.username + '_posts.json', 'w') as f:
 				json.dump([post.toJSON() for post in self.posts], f)
-			print("%s saved into the current directory" % self.username + '_posts.json')
+			print("%s saved into the current directory" % (self.username + '_posts.json'))

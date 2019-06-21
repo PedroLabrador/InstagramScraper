@@ -58,11 +58,15 @@ class Tag:
 			'profile_url':     self.profile_url
 		}
 
-	def check_profile(self):
+	def check_profile(self, current):
 		try:
-			print("Checking %s profile               " % self.username, end="\r", flush=True)
+			print("[%s] Checking %s profile %s" % (current, self.username, ' ' * 10), end="\r", flush=True)
 			response     = request.get(create_url_user(self.profile_url))
 			data         = json.loads(response.text)
 			self.user    = TaggedUser(data['graphql']['user'])
 		except Exception as e:
-			raise e
+			if request.is_enabled_proxy():
+				request.select_proxy(status=True)
+				self.check_profile(current)
+			else:
+				raise e
