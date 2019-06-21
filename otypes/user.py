@@ -85,12 +85,12 @@ class User:
 			'has_next_page': self.has_next_page
 		})
 
-	def get_posts_request(self, max_requests=5, aggresive=False):
+	def get_posts_request(self, max_requests=5, aggresive=False, it=0):
 		try:
 			if self.is_private:
 				print("Private profile :(\nCannot retrieve posts")
 			else:
-				iteration = 0
+				iteration = it
 				while True:
 					print("[Request #%s] %s" % (iteration, self.status()), end="\r", flush=True)
 					if not self.has_next_page or (iteration is max_requests and not aggresive):
@@ -107,7 +107,11 @@ class User:
 							self.posts.append(Post(edge['node']))
 				print("status posts: %s" % self.status())
 		except Exception as e:
-			raise e
+			if request.is_enabled_proxy():
+				request.select_proxy(status=True)
+				self.get_posts_request(max_requests, aggresive, iteration)
+			else:
+				raise e
 
 		return self.posts
 
