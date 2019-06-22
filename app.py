@@ -9,7 +9,7 @@ class InstagramScraper:
 	def __init__(self, profile_url=''):
 		self.profile_url = profile_url
 		self.user        = {}
-		self.hashtags    = []
+		self.hashtag     = {}
 
 	def get_user_profile_request(self, profile_url='', reset_posts=True):
 		try:
@@ -26,8 +26,8 @@ class InstagramScraper:
 		return self.user
 
 	def get_single_post_request(self, post_url):
-		post = {}
 		try:
+			post = {}
 			response  = request.get(create_url_single_post(post_url))
 			data      = json.loads(response.text)
 			post      = Post(data['data']['shortcode_media'])
@@ -40,19 +40,18 @@ class InstagramScraper:
 		return post
 
 	def get_hashtag_request(self, hashtag_url, first=''):
-		hashtag = {}
 		try:
-			response  = request.get(create_url_hashtag(hashtag_url, first))
-			data      = json.loads(response.text)
-			hashtag   = Hashtag(data['data']['hashtag'])
-			self.hashtags.append(hashtag)
+			response     = request.get(create_url_hashtag(hashtag_url, first))
+			data         = json.loads(response.text)
+			self.hashtag = Hashtag(data['data']['hashtag'])
 		except Exception as e:
 			if request.is_enabled_proxy():
 				request.select_proxy(status=True)
 				self.get_hashtag_request(hashtag_url, first)
 			else:
 				raise e
-		return hashtag
+		return self.hashtag
 
 	def renew_proxy_list(self, option):
+		print("Refreshing free proxy list")
 		return request.get_proxy_list(option)
