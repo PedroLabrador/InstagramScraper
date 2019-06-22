@@ -55,10 +55,14 @@ class Hashtag:
 					for current in data['edges']:
 						self.edge_hashtag_to_media.append(Post(current['node']))
 		except Exception as e:
-			raise e
+			if request.is_enabled_proxy():
+				request.select_proxy(status=True)
+				self.get_posts_request(max_requests, first, aggresive)
+			else:
+				raise e
 	
 	def refresh_post_tags(self):
-		print("Refreshing %s posts from %s" % (len(self.edge_hashtag_to_media), self.hashtag_url))
+		print("Refreshing %s posts from %s%s" % (len(self.edge_hashtag_to_media), self.hashtag_url, ' ' * 10))
 		for post in self.edge_hashtag_to_media:
 			print("Updating Post %s" % (post.shortcode), end="\r", flush=True)
 			post.update_tags_request()

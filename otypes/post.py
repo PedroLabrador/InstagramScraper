@@ -88,11 +88,15 @@ class Post:
 			post      = json.loads(response.text)['data']['shortcode_media']
 			self.edge_media_to_tagged_user = [Tag(tag['node']['user']) for tag in post['edge_media_to_tagged_user']['edges']]			
 		except Exception as e:
-			raise e
+			if request.is_enabled_proxy():
+				request.select_proxy(status=True)
+				self.update_tags_request()
+			else:
+				raise e
 
-	def get_likes_request(self, max_requests=5, aggresive=False):
+	def get_likes_request(self, max_requests=5, aggresive=False, it=0):
 		try:
-			iteration = 0
+			iteration = it
 			while True:
 				print("%s: [Request #%s] %s" % (self.shortcode, iteration, self.get_status_likes()), end="\r", flush=True)
 				response   = request.get(create_url_likes(self.post_url, self.end_cursor_likes))
@@ -109,12 +113,16 @@ class Post:
 					break
 			print("%s: status likes: %s" % (self.shortcode, self.get_status_likes()))
 		except Exception as e:
-			raise e
+			if request.is_enabled_proxy():
+				request.select_proxy(status=True)
+				self.get_likes_request(max_requests, aggresive, iteration)
+			else:
+				raise e
 
-	def get_comments_request(self, max_requests=5, aggresive=False):
+	def get_comments_request(self, max_requests=5, aggresive=False, it=0):
 		try:
 			if not self.comments_disabled:
-				iteration = 0
+				iteration = it
 				while True:
 					print("%s: [Request #%s] %s" % (self.shortcode, iteration, self.get_status_comments()), end="\r", flush=True)
 					response   = request.get(create_url_comments(self.post_url, self.end_cursor_comments))
@@ -131,7 +139,11 @@ class Post:
 						break
 				print("%s: status comments: %s" % (self.shortcode, self.get_status_comments()))
 		except Exception as e:
-			raise e
+			if request.is_enabled_proxy():
+				request.select_proxy(status=True)
+				self.get_comments_request(max_requests, aggresive, iteration)
+			else:
+				raise e
 
 	def check_users_liked(self, users):
 		if isinstance(users, list):
