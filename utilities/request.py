@@ -1,8 +1,10 @@
 import requests, random, json
-from  bs4            import BeautifulSoup
-from  random         import choice
-from  fake_useragent import UserAgent
-from .parameters     import parameters_proxy_list, default_option, enable_proxy, api_url_proxy_list, url_sslproxies, _user_agents
+from   bs4                 import BeautifulSoup
+from   random              import choice
+from   fake_useragent      import UserAgent
+from   requests.exceptions import RequestException, ProxyError, HTTPError
+from  .parameters          import parameters_proxy_list, default_option, enable_proxy, api_url_proxy_list, url_sslproxies, _user_agents
+from ..exceptions.common   import IgRequestException
 
 class Request:
 	def __init__(self):
@@ -82,10 +84,23 @@ class Request:
 			else:
 				response = requests.get(url, headers={'User-Agent': self.__random_agent()})
 			response.raise_for_status()
-		except requests.HTTPError as e:
-			raise requests.HTTPError('Received non 200 status code from Instagram')
-		except requests.RequestException as r:
-			raise requests.RequestException
+		except HTTPError as e:
+			raise IgRequestException('IgRequest - Received non 200 status code from Instagram')
+		except ProxyError as p:
+			raise IgRequestException('IgRequest - Proxy Error')
+		except RequestException as r:
+			raise IgRequestException('IgRequest - Exception')
+		except TimeoutError:
+			raise IgRequestException('IgRequest - Timeout Error')
+		except ConnectionRefusedError:
+			raise IgRequestException('IgRequest - Connection Refused Error')
+		except ConnectionResetError:
+			raise IgRequestException('IgRequest - Connection Reset Error')
+		except ConnectionError:
+			raise IgRequestException('IgRequest - Connection Error')
+		except Exception as e:
+			print("*"*50)
+			raise e
 		return response
 
 
