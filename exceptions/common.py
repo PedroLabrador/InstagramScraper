@@ -7,3 +7,6 @@ class UsernameException(Exception):
 class TagnameException(Exception):
 	pass
 	
+class IgRequestException(Exception):
+	pass
+	
