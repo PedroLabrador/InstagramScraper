@@ -2,6 +2,7 @@ import json
 from  .post              import Post
 from ..utilities.extras  import create_url_hashtag
 from ..utilities.request import request
+from ..exceptions.common import IgRequestException
 
 class Hashtag:
 	def __init__(self, hashtag):
@@ -54,19 +55,20 @@ class Hashtag:
 
 					for current in data['edges']:
 						self.edge_hashtag_to_media.append(Post(current['node']))
-		except Exception as e:
+		except IgRequestException as r:
 			if request.is_enabled_proxy():
 				request.select_proxy(status=True)
 				self.get_posts_request(max_requests, first, aggresive)
 			else:
-				raise e
+				raise r
+		except Exception as e:
+			raise e
 	
 	def refresh_post_tags(self):
 		print("Refreshing %s posts from %s%s" % (len(self.edge_hashtag_to_media), self.hashtag_url, ' ' * 10))
-		for post in self.edge_hashtag_to_media:
-			print("Updating Post %s" % (post.shortcode), end="\r", flush=True)
-			post.update_tags_request()
-		print("Updating task done successfully")
+		for key, post in enumerate(self.edge_hashtag_to_media):
+			post.update_tags_request(int(len(self.edge_hashtag_to_media) - key - 1))
+		print("Updating task done successfully %s" % (' ' * 30))
 
 	def retrieve_tagged_users(self):
 		tags = []

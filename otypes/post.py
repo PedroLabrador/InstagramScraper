@@ -1,11 +1,12 @@
 import json, os
-from clint.textui           import progress
+from   clint.textui         import progress
 from  .comment              import Comment
 from  .like                 import Like
 from  .tag                  import Tag
 from ..utilities.parameters import parameters
 from ..utilities.request    import request
 from ..utilities.extras     import create_url_likes, create_url_comments, create_url_single_post
+from ..exceptions.common    import IgRequestException
 
 class Post:
 	def __init__(self, post):
@@ -82,17 +83,22 @@ class Post:
 			'has_next_page_comments': self.has_next_page_comments
 		})
 
-	def update_tags_request(self):
+	def update_tags_request(self, remaining):
 		try:
+			print("Updating Post %s - remaining %s%s" % (self.shortcode, remaining, ' ' * 10), end="\r", flush=True)
 			response  = request.get(create_url_single_post(self.post_url))
 			post      = json.loads(response.text)['data']['shortcode_media']
-			self.edge_media_to_tagged_user = [Tag(tag['node']['user']) for tag in post['edge_media_to_tagged_user']['edges']]			
-		except Exception as e:
+			self.edge_media_to_tagged_user = [Tag(tag['node']['user']) for tag in post['edge_media_to_tagged_user']['edges']] if 'edge_media_to_tagged_user' in post else []			
+		except TypeError:
+			pass
+		except IgRequestException as r:
 			if request.is_enabled_proxy():
 				request.select_proxy(status=True)
-				self.update_tags_request()
+				self.update_tags_request(remaining)
 			else:
-				raise e
+				raise r
+		except Exception as e:
+			raise e			
 
 	def get_likes_request(self, max_requests=5, aggresive=False, it=0):
 		try:
@@ -112,12 +118,14 @@ class Post:
 				if not self.has_next_page_likes or (iteration is max_requests and not aggresive):
 					break
 			print("%s: status likes: %s" % (self.shortcode, self.get_status_likes()))
-		except Exception as e:
+		except IgRequestException as r:
 			if request.is_enabled_proxy():
 				request.select_proxy(status=True)
 				self.get_likes_request(max_requests, aggresive, iteration)
 			else:
-				raise e
+				raise r
+		except Exception as e:
+			raise e
 
 	def get_comments_request(self, max_requests=5, aggresive=False, it=0):
 		try:
@@ -138,12 +146,14 @@ class Post:
 					if not self.has_next_page_comments or (iteration is max_requests and not aggresive):
 						break
 				print("%s: status comments: %s" % (self.shortcode, self.get_status_comments()))
-		except Exception as e:
+		except IgRequestException as r:
 			if request.is_enabled_proxy():
 				request.select_proxy(status=True)
 				self.get_comments_request(max_requests, aggresive, iteration)
 			else:
-				raise e
+				raise r
+		except Exception as e:
+			raise e
 
 	def check_users_liked(self, users):
 		if isinstance(users, list):
@@ -186,6 +196,12 @@ class Post:
 							f.flush()
 
 					print('\x1b[1A%s%s.mp4 Downloaded' % ('-' * 60, self.shortcode))
+			except IgRequestException as r:
+				if request.is_enabled_proxy():
+					request.select_proxy(status=True)
+					self.download_post()
+				else:
+					raise r
 			except Exception as e:
 				raise e
 		else:

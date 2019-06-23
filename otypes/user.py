@@ -2,6 +2,7 @@ import json
 from  .post              import Post
 from ..utilities.extras  import create_url_user, create_url_single_post
 from ..utilities.request import request
+from ..exceptions.common import IgRequestException
 
 class User:
 	def __init__(self, user, reset_posts=False):
@@ -96,9 +97,9 @@ class User:
 					if not self.has_next_page or (iteration is max_requests and not aggresive):
 						break
 					else:
-						iteration += 1
 						response  = request.get(create_url_user(self.profile_url, self.id, self.end_cursor))
 						data      = json.loads(response.text)['data']['user']['edge_owner_to_timeline_media']
+						iteration += 1
 
 						self.has_next_page = data['page_info']['has_next_page']
 						self.end_cursor    = data['page_info']['end_cursor']
@@ -106,12 +107,14 @@ class User:
 						for edge in data['edges']:
 							self.posts.append(Post(edge['node']))
 				print("status posts: %s" % self.status())
-		except Exception as e:
+		except IgRequestException as r:
 			if request.is_enabled_proxy():
 				request.select_proxy(status=True)
-				self.get_posts_request(max_requests, aggresive, iteration-1)
+				self.get_posts_request(max_requests, aggresive, iteration)
 			else:
-				raise e
+				raise r
+		except Exception as e:
+			raise e
 
 		return self.posts
 
@@ -124,13 +127,14 @@ class User:
 					data     = json.loads(response.text)
 					post.update_video_data(data['data']['shortcode_media'])
 					videos.append(post.shortcode)
-		except Exception as e:
+		except IgRequestException as r:
 			if request.is_enabled_proxy():
 				request.select_proxy(status=True)
 				self.get_posts_videos_request(videos)
 			else:
-				raise e
-
+				raise r
+		except Exception as e:
+			raise e
 		return [post for post in self.posts if post.is_video]
 
 	def retrieve_tagged_users(self):

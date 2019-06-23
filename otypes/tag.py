@@ -1,6 +1,7 @@
 import json
 from ..utilities.request import request
 from ..utilities.extras  import create_url_user
+from ..exceptions.common import IgRequestException
 
 class TaggedUser:
 	def __init__(self, user):
@@ -64,9 +65,11 @@ class Tag:
 			response     = request.get(create_url_user(self.profile_url))
 			data         = json.loads(response.text)
 			self.user    = TaggedUser(data['graphql']['user'])
-		except Exception as e:
+		except IgRequestException as r:
 			if request.is_enabled_proxy():
 				request.select_proxy(status=True)
 				self.check_profile(current)
 			else:
-				raise e
+				raise r
+		except Exception as e:
+			raise e
