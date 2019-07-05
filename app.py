@@ -1,4 +1,4 @@
-import json
+import json, requests
 from .otypes.user       import User
 from .otypes.post       import Post
 from .otypes.hashtag    import Hashtag
@@ -60,5 +60,5 @@ class InstagramScraper:
 		return self.hashtag
 
 	def renew_proxy_list(self, option):
-		print("[%s] Refreshing free proxy list" % (time.strftime('%x %X')))
+		print("Refreshing free proxy list")
 		return request.get_proxy_list(option)

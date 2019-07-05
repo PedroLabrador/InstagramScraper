@@ -1,4 +1,4 @@
-import json, time
+import json
 from  .post              import Post
 from ..utilities.extras  import create_url_hashtag
 from ..utilities.request import request
@@ -42,7 +42,7 @@ class Hashtag:
 		try:
 			iteration = 0
 			while True:
-				print("[%s] [Request #%s] %s" % (time.strftime('%x %X'), iteration, self.status()), end="\r", flush=True)
+				print("[Request #%s] %s" % (iteration, self.status()), end="\r", flush=True)
 				if not self.has_next_page or (iteration is max_requests and not aggresive):
 					break
 				else:
@@ -65,10 +65,10 @@ class Hashtag:
 			raise e
 	
 	def refresh_post_tags(self):
-		print("[%s] Refreshing %s posts from %s%s" % (time.strftime('%x %X'), len(self.edge_hashtag_to_media), self.hashtag_url, ' ' * 10))
+		print("Refreshing %s posts from %s%s" % (len(self.edge_hashtag_to_media), self.hashtag_url, ' ' * 10))
 		for key, post in enumerate(self.edge_hashtag_to_media):
 			post.update_tags_request(int(len(self.edge_hashtag_to_media) - key - 1))
-		print("[%s] Updating task done successfully %s" % (time.strftime('%x %X'), ' ' * 30))
+		print("Updating task done successfully %s" % (' ' * 30))
 
 	def retrieve_tagged_users(self):
 		tags = []

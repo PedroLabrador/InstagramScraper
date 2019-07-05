@@ -1,4 +1,4 @@
-import requests, random, json, time
+import requests, random, json
 from   bs4                 import BeautifulSoup
 from   random              import choice
 from   fake_useragent      import UserAgent
@@ -15,13 +15,13 @@ class Request:
 		self.enable_proxy  = enable_proxy
 
 		if enable_proxy:
-			print("[%s] Proxies enabled" % (time.strftime('%x %X')))
+			print("Proxies enabled")
 			self.get_proxy_list(default_option)
 
 	def get_proxy_list(self, default=0):
 		# scrapes a list of free proxies from https://www.sslproxies.org/
 		if default is 1:
-			print("[%s] Retrieving list of free proxies from https://www.sslproxies.org/" % (time.strftime('%x %X')))
+			print("Retrieving list of free proxies from https://www.sslproxies.org/")
 			response       = requests.get(url_sslproxies, headers={'User-Agent': UserAgent().random})
 			soup           = BeautifulSoup(response.content, 'html.parser')
 			proxylisttable = soup.find(id='proxylisttable')
@@ -34,7 +34,7 @@ class Request:
 				})
 		# get a list of free proxies from https://www.proxy-list.download/api/v1/
 		elif default is 2:
-			print("[%s] Retrieving list of free proxies from https://www.proxy-list.download/ API" % (time.strftime('%x %X')))
+			print("Retrieving list of free proxies from https://www.proxy-list.download/ API")
 			response     = requests.get(api_url_proxy_list, headers={'User-Agent': UserAgent().random})
 			proxies_list = response.text.replace('\r', '').strip().split('\n')
 			self.proxies.clear()
@@ -46,7 +46,7 @@ class Request:
 					'country': 'United States'
 				})
 		else:
-			print("[%s] Using default proxy list from config" % (time.strftime('%x %X')))
+			print("Using default proxy list from config")
 			self.proxies = parameters_proxy_list
 
 		self.select_proxy()
@@ -60,8 +60,7 @@ class Request:
 	def select_proxy(self, status=False):
 		self.proxy_index = random.randint(0, len(self.proxies) - 1)
 		self.proxy       = self.proxies[self.proxy_index]
-		print("[%s] %sCurrent proxy: %s:%s Country: %s %s" % (
-			time.strftime('%x %X'),
+		print("%sCurrent proxy: %s:%s Country: %s %s" % (
 			'' if not (status) else '[Switching proxy] -> ',
 			self.proxy['ip'],
 			self.proxy['port'],
