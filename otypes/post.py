@@ -1,4 +1,4 @@
-import json, os
+import json, os, time
 from   clint.textui         import progress
 from  .comment              import Comment
 from  .like                 import Like
@@ -85,7 +85,7 @@ class Post:
 
 	def update_tags_request(self, remaining):
 		try:
-			print("Updating Post %s - remaining %s%s" % (self.shortcode, remaining, ' ' * 10), end="\r", flush=True)
+			print("[%s] Updating Post %s - remaining %s%s" % (time.strftime('%x %X'), self.shortcode, remaining, ' ' * 10), end="\r", flush=True)
 			response  = request.get(create_url_single_post(self.post_url))
 			post      = json.loads(response.text)['data']['shortcode_media']
 			self.edge_media_to_tagged_user = [Tag(tag['node']['user']) for tag in post['edge_media_to_tagged_user']['edges']] if 'edge_media_to_tagged_user' in post else []			
@@ -104,7 +104,7 @@ class Post:
 		try:
 			iteration = it
 			while True:
-				print("%s: [Request #%s] %s" % (self.shortcode, iteration, self.get_status_likes()), end="\r", flush=True)
+				print("[%s] %s: [Request #%s] %s" % (time.strftime('%x %X'), self.shortcode, iteration, self.get_status_likes()), end="\r", flush=True)
 				response   = request.get(create_url_likes(self.post_url, self.end_cursor_likes))
 				data       = json.loads(response.text)['data']['shortcode_media']['edge_liked_by']
 				iteration += 1
@@ -117,7 +117,7 @@ class Post:
 
 				if not self.has_next_page_likes or (iteration is max_requests and not aggresive):
 					break
-			print("%s: status likes: %s" % (self.shortcode, self.get_status_likes()))
+			print("[%s] %s: status likes: %s" % (time.strftime('%x %X'), self.shortcode, self.get_status_likes()))
 		except IgRequestException as r:
 			if request.is_enabled_proxy():
 				request.select_proxy(status=True)
@@ -132,7 +132,7 @@ class Post:
 			if not self.comments_disabled:
 				iteration = it
 				while True:
-					print("%s: [Request #%s] %s" % (self.shortcode, iteration, self.get_status_comments()), end="\r", flush=True)
+					print("[%s] %s: [Request #%s] %s" % (time.strftime('%x %X'), self.shortcode, iteration, self.get_status_comments()), end="\r", flush=True)
 					response   = request.get(create_url_comments(self.post_url, self.end_cursor_comments))
 					data       = json.loads(response.text)['data']['shortcode_media']['edge_media_to_parent_comment']
 					iteration += 1
@@ -145,7 +145,7 @@ class Post:
 
 					if not self.has_next_page_comments or (iteration is max_requests and not aggresive):
 						break
-				print("%s: status comments: %s" % (self.shortcode, self.get_status_comments()))
+				print("[%s] %s: status comments: %s" % (time.strftime('%x %X'), self.shortcode, self.get_status_comments()))
 		except IgRequestException as r:
 			if request.is_enabled_proxy():
 				request.select_proxy(status=True)
@@ -186,7 +186,7 @@ class Post:
 					if not os.path.exists('videos/%s' % self.owner_username):
 						os.mkdir('videos/%s' % self.owner_username)
 				with open(("videos/%s/%s.mp4" % (self.owner_username, self.shortcode)), "wb") as f:
-					print("[Downloading Video %s]" % (self.shortcode))
+					print("[%s] [Downloading Video %s]" % (time.strftime('%x %X'), self.shortcode))
 					response     = request.get(self.video_url, stream=True)
 					total_length = int(response.headers.get('content-length'))
 
@@ -195,7 +195,7 @@ class Post:
 							f.write(chunk)
 							f.flush()
 
-					print('\x1b[1A%s%s.mp4 Downloaded' % ('-' * 60, self.shortcode))
+					print('[%s] \x1b[1A%s%s.mp4 Downloaded' % (time.strftime('%x %X'), '-' * 60, self.shortcode))
 			except IgRequestException as r:
 				if request.is_enabled_proxy():
 					request.select_proxy(status=True)

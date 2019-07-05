@@ -1,4 +1,4 @@
-import json
+import json, time
 from  .post              import Post
 from ..utilities.extras  import create_url_user, create_url_single_post
 from ..utilities.request import request
@@ -89,11 +89,11 @@ class User:
 	def get_posts_request(self, max_requests=5, aggresive=False, it=0):
 		try:
 			if self.is_private:
-				print("Private profile :(\nCannot retrieve posts")
+				print("[%s] Private profile :(\nCannot retrieve posts" % (time.strftime('%x %X')))
 			else:
 				iteration = it
 				while True:
-					print("[Request #%s] %s" % (iteration, self.status()), end="\r", flush=True)
+					print("[%s] [Request #%s] %s" % (time.strftime('%x %X'), iteration, self.status()), end="\r", flush=True)
 					if not self.has_next_page or (iteration is max_requests and not aggresive):
 						break
 					else:
@@ -106,7 +106,7 @@ class User:
 
 						for edge in data['edges']:
 							self.posts.append(Post(edge['node']))
-				print("status posts: %s" % self.status())
+				print("[%s] status posts: %s" % (time.strftime('%x %X'), self.status()))
 		except IgRequestException as r:
 			if request.is_enabled_proxy():
 				request.select_proxy(status=True)
@@ -122,7 +122,7 @@ class User:
 		try:
 			for post in self.posts:
 				if post.is_video and post.shortcode not in videos:
-					print("[Requesting Video Post %s]" % (post.shortcode), end="\r", flush=True)
+					print("[%s] [Requesting Video Post %s]" % (time.strftime('%x %X'), post.shortcode), end="\r", flush=True)
 					response = request.get(create_url_single_post(post.post_url))
 					data     = json.loads(response.text)
 					post.update_video_data(data['data']['shortcode_media'])
@@ -158,4 +158,4 @@ class User:
 		if self.posts:
 			with open(self.username + '_posts.json', 'w') as f:
 				json.dump([post.toJSON() for post in self.posts], f)
-			print("%s saved into the current directory" % (self.username + '_posts.json'))
+			print("[%s] %s saved into the current directory" % (time.strftime('%x %X'), self.username + '_posts.json'))
