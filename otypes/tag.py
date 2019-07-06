@@ -1,4 +1,4 @@
-import json
+import json, time
 from ..utilities.request import request
 from ..utilities.extras  import create_url_user
 from ..exceptions.common import IgRequestException
@@ -34,13 +34,14 @@ class TaggedUser:
 		self.post_count                = user['edge_owner_to_timeline_media']['count']
 
 class Tag:
-	def __init__(self, tag):
+	def __init__(self, tag, shortcode=''):
 		self.full_name       = tag['full_name']
 		self.id              = tag['id']
 		self.is_verified     = tag['is_verified']
 		self.profile_pic_url = tag['profile_pic_url']
 		self.username        = tag['username']
 		self.profile_url     = "https://instagram.com/%s/" % tag['username']
+		self.tagged_in       = shortcode
 		self.user            = {}
 
 	def __repr__(self):
@@ -61,13 +62,13 @@ class Tag:
 
 	def check_profile(self, current):
 		try:
-			print("[%s] Checking %s profile %s" % (current, self.username, ' ' * 10), end="\r", flush=True)
+			print("[%s] [%s] Checking %s profile %s" % (time.strftime('%X'), current, self.username, ' ' * 10), end="\r", flush=True)
 			response     = request.get(create_url_user(self.profile_url))
 			data         = json.loads(response.text)
 			self.user    = TaggedUser(data['graphql']['user'])
 		except IgRequestException as r:
 			if request.is_enabled_proxy():
-				request.select_proxy(status=True)
+				request.select_proxy(status=True, error=r)
 				self.check_profile(current)
 			else:
 				raise r

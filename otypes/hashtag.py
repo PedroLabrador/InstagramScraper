@@ -1,4 +1,4 @@
-import json
+import json, time
 from  .post              import Post
 from ..utilities.extras  import create_url_hashtag
 from ..utilities.request import request
@@ -42,7 +42,7 @@ class Hashtag:
 		try:
 			iteration = 0
 			while True:
-				print("[Request #%s] %s" % (iteration, self.status()), end="\r", flush=True)
+				print("[%s] [Request #%s] %s" % (time.strftime('%X'), iteration, self.status()), end="\r", flush=True)
 				if not self.has_next_page or (iteration is max_requests and not aggresive):
 					break
 				else:
@@ -57,18 +57,19 @@ class Hashtag:
 						self.edge_hashtag_to_media.append(Post(current['node']))
 		except IgRequestException as r:
 			if request.is_enabled_proxy():
-				request.select_proxy(status=True)
+				request.select_proxy(status=True, error=r)
 				self.get_posts_request(max_requests, first, aggresive)
 			else:
 				raise r
 		except Exception as e:
 			raise e
 	
-	def refresh_post_tags(self):
-		print("Refreshing %s posts from %s%s" % (len(self.edge_hashtag_to_media), self.hashtag_url, ' ' * 10))
+	def refresh_post_tags(self, shortcodes):
+		print("[%s] Refreshing %s posts from %s%s" % (time.strftime('%X'), len(self.edge_hashtag_to_media), self.hashtag_url, ' ' * 10))
 		for key, post in enumerate(self.edge_hashtag_to_media):
-			post.update_tags_request(int(len(self.edge_hashtag_to_media) - key - 1))
-		print("Updating task done successfully %s" % (' ' * 30))
+			if post.shortcode not in shortcodes:
+				post.update_tags_request(int(len(self.edge_hashtag_to_media) - key - 1))
+		print("[%s] Updating task done successfully %s" % (time.strftime('%X'), ' ' * 30))
 
 	def retrieve_tagged_users(self):
 		tags = []
