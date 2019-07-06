@@ -25,7 +25,7 @@ parameters = {
 		'query_hash': 'f92f56d47dc7a55b606908374b43a314',
 		'variables': {
 			'tag_name': '',
-			'first': 150,
+			'first': 37,
 			'after': ''
 		}
 	},
