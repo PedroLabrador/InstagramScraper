@@ -1,4 +1,4 @@
-import requests, random, json
+import requests, random, json, time
 from   bs4                 import BeautifulSoup
 from   random              import choice
 from   fake_useragent      import UserAgent
@@ -15,13 +15,13 @@ class Request:
 		self.enable_proxy  = enable_proxy
 
 		if enable_proxy:
-			print("Proxies enabled")
+			print("[%s] Proxies enabled" % (time.strftime('%X')))
 			self.get_proxy_list(default_option)
 
 	def get_proxy_list(self, default=0):
 		# scrapes a list of free proxies from https://www.sslproxies.org/
 		if default is 1:
-			print("Retrieving list of free proxies from https://www.sslproxies.org/")
+			print("[%s] Retrieving list of free proxies from https://www.sslproxies.org/" % (time.strftime('%X')))
 			response       = requests.get(url_sslproxies, headers={'User-Agent': UserAgent().random})
 			soup           = BeautifulSoup(response.content, 'html.parser')
 			proxylisttable = soup.find(id='proxylisttable')
@@ -34,7 +34,7 @@ class Request:
 				})
 		# get a list of free proxies from https://www.proxy-list.download/api/v1/
 		elif default is 2:
-			print("Retrieving list of free proxies from https://www.proxy-list.download/ API")
+			print("[%s] Retrieving list of free proxies from https://www.proxy-list.download/ API" % (time.strftime('%X')))
 			response     = requests.get(api_url_proxy_list, headers={'User-Agent': UserAgent().random})
 			proxies_list = response.text.replace('\r', '').strip().split('\n')
 			self.proxies.clear()
@@ -46,7 +46,7 @@ class Request:
 					'country': 'United States'
 				})
 		else:
-			print("Using default proxy list from config")
+			print("[%s] Using default proxy list from config" % (time.strftime('%X')))
 			self.proxies = parameters_proxy_list
 
 		self.select_proxy()
@@ -57,10 +57,12 @@ class Request:
 			return choice(self.user_agents)
 		return choice(_user_agents)
 
-	def select_proxy(self, status=False):
+	def select_proxy(self, status=False, error=''):
 		self.proxy_index = random.randint(0, len(self.proxies) - 1)
 		self.proxy       = self.proxies[self.proxy_index]
-		print("%sCurrent proxy: %s:%s Country: %s %s" % (
+		print("[%s]%s%sCurrent proxy: %s:%s Country: %s %s" % (
+			time.strftime('%X'),
+			' ' + str(error) + ' ' if error else ' ',
 			'' if not (status) else '[Switching proxy] -> ',
 			self.proxy['ip'],
 			self.proxy['port'],
@@ -80,26 +82,26 @@ class Request:
 			if self.enable_proxy:
 				headers  = {'User-Agent': self.__random_agent()}
 				proxies  = {'http':  self.__get_proxy(), 'https': self.__get_proxy()}
-				response = requests.get(url, stream=stream, headers=headers, proxies=proxies)
+				response = requests.get(url, stream=stream, headers=headers, proxies=proxies, timeout=(3, 30))
 			else:
-				response = requests.get(url, headers={'User-Agent': self.__random_agent()})
+				response = requests.get(url, headers={'User-Agent': self.__random_agent()}, timeout=(3, 30))
 			response.raise_for_status()
 		except HTTPError as e:
-			raise IgRequestException('IgRequest - Received non 200 status code from Instagram')
+			raise IgRequestException('Received non 200 status code from Instagram')
 		except ProxyError as p:
-			raise IgRequestException('IgRequest - Proxy Error')
+			raise IgRequestException('Proxy Error')
 		except RequestException as r:
-			raise IgRequestException('IgRequest - Exception')
+			raise IgRequestException('Request Error')
 		except TimeoutError:
-			raise IgRequestException('IgRequest - Timeout Error')
+			raise IgRequestException('Timeout Error')
 		except ConnectionRefusedError:
-			raise IgRequestException('IgRequest - Connection Refused Error')
+			raise IgRequestException('Connection Refused Error')
 		except ConnectionResetError:
-			raise IgRequestException('IgRequest - Connection Reset Error')
+			raise IgRequestException('Connection Reset Error')
 		except ConnectionError:
-			raise IgRequestException('IgRequest - Connection Error')
+			raise IgRequestException('Connection Error')
 		except Exception as e:
-			print("*"*50)
+			print("*" * 100)
 			raise e
 		return response
 
