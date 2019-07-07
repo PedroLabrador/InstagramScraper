@@ -4,7 +4,7 @@ from .otypes.post       import Post
 from .otypes.hashtag    import Hashtag
 from .utilities.request import request
 from .utilities.extras  import create_url_user, create_url_single_post, create_url_hashtag
-from .exceptions.common import IgRequestException
+from .exceptions.common import IgRequestException, IgNotFoundException
 
 class InstagramScraper:
 	def __init__(self, profile_url=''):
@@ -18,6 +18,8 @@ class InstagramScraper:
 			data      = json.loads(response.text)
 			# Set to True, just to delete the current saved posts and request them again with more data :(
 			self.user = User(data['graphql']['user'], reset_posts)
+		except IgNotFoundException:
+			return ''
 		except IgRequestException as r:
 			if request.is_enabled_proxy():
 				request.select_proxy(status=True)
@@ -49,16 +51,20 @@ class InstagramScraper:
 			response     = request.get(create_url_hashtag(hashtag_url, first))
 			data         = json.loads(response.text)
 			self.hashtag = Hashtag(data['data']['hashtag'])
+		except IgNotFoundException:
+			return ''
 		except IgRequestException as r:
 			if request.is_enabled_proxy():
 				request.select_proxy(status=True)
 				self.get_hashtag_request(hashtag_url, first)
 			else:
 				raise r
+		except TypeError:
+			return ''
 		except Exception as e:
 			raise e
 		return self.hashtag
 
 	def renew_proxy_list(self, option):
-		print("[%s] Refreshing free proxy list" % (time.strftime('%x %X')))
+		print("[%s] Refreshing free proxy list" % (time.strftime('%X')))
 		return request.get_proxy_list(option)

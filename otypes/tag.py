@@ -1,7 +1,7 @@
 import json, time
 from ..utilities.request import request
 from ..utilities.extras  import create_url_user
-from ..exceptions.common import IgRequestException
+from ..exceptions.common import IgRequestException, IgNotFoundException
 
 class TaggedUser:
 	def __init__(self, user):
@@ -66,6 +66,9 @@ class Tag:
 			response     = request.get(create_url_user(self.profile_url))
 			data         = json.loads(response.text)
 			self.user    = TaggedUser(data['graphql']['user'])
+			return True
+		except IgNotFoundException:
+			return False
 		except IgRequestException as r:
 			if request.is_enabled_proxy():
 				request.select_proxy(status=True, error=r)
