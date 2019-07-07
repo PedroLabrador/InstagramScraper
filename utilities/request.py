@@ -1,10 +1,10 @@
-import requests, random, json, time
+import requests, random, time
 from   bs4                 import BeautifulSoup
 from   random              import choice
 from   fake_useragent      import UserAgent
 from   requests.exceptions import RequestException, ProxyError, HTTPError
 from  .parameters          import parameters_proxy_list, default_option, enable_proxy, api_url_proxy_list, url_sslproxies, _user_agents
-from ..exceptions.common   import IgRequestException
+from ..exceptions.common   import IgRequestException, IgNotFoundException
 
 class Request:
 	def __init__(self):
@@ -82,11 +82,13 @@ class Request:
 			if self.enable_proxy:
 				headers  = {'User-Agent': self.__random_agent()}
 				proxies  = {'http':  self.__get_proxy(), 'https': self.__get_proxy()}
-				response = requests.get(url, stream=stream, headers=headers, proxies=proxies, timeout=(3, 30))
+				response = requests.get(url, stream=stream, headers=headers, proxies=proxies, timeout=(5,30))
 			else:
-				response = requests.get(url, headers={'User-Agent': self.__random_agent()}, timeout=(3, 30))
+				response = requests.get(url, headers={'User-Agent': self.__random_agent()}, timeout=(5,30))
 			response.raise_for_status()
 		except HTTPError as e:
+			if e.response.status_code == 404:
+				raise IgNotFoundException()
 			raise IgRequestException('Received non 200 status code from Instagram')
 		except ProxyError as p:
 			raise IgRequestException('Proxy Error')
