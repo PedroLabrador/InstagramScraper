@@ -9,4 +9,6 @@ class TagnameException(Exception):
 	
 class IgRequestException(Exception):
 	pass
-	
+
+class IgNotFoundException(Exception):
+	pass
