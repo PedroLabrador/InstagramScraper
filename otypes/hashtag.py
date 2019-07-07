@@ -38,9 +38,9 @@ class Hashtag:
 			'has_next_page': self.has_next_page
 		})
 
-	def get_posts_request(self, max_requests=2, first='', aggresive=False):
+	def get_posts_request(self, max_requests=2, first='', aggresive=False, it=0):
 		try:
-			iteration = 0
+			iteration = it
 			while True:
 				print("[%s] [Request #%s] %s" % (time.strftime('%X'), iteration, self.status()), end="\r", flush=True)
 				if not self.has_next_page or (iteration is max_requests and not aggresive):
@@ -58,7 +58,7 @@ class Hashtag:
 		except IgRequestException as r:
 			if request.is_enabled_proxy():
 				request.select_proxy(status=True, error=r)
-				self.get_posts_request(max_requests, first, aggresive)
+				self.get_posts_request(max_requests, first, aggresive, iteration)
 			else:
 				raise r
 		except Exception as e:
