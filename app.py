@@ -65,6 +65,9 @@ class InstagramScraper:
 			raise e
 		return self.hashtag
 
+	def get_changed_proxy_count(self):
+	    return request.changed_proxy
+
 	def renew_proxy_list(self, option):
-		print("[%s] Refreshing free proxy list" % (time.strftime('%X')))
+		print("[%s] Refreshing free proxy list" % (time.strftime('%x')))
 		return request.get_proxy_list(option)

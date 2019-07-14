@@ -88,7 +88,9 @@ class Post:
 			print("[%s] Updating Post %s - remaining %s%s" % (time.strftime('%X'), self.shortcode, remaining, ' ' * 10), end="\r", flush=True)
 			response  = request.get(create_url_single_post(self.post_url))
 			post      = json.loads(response.text)['data']['shortcode_media']
-			self.edge_media_to_tagged_user = [Tag(tag['node']['user'], self.shortcode) for tag in post['edge_media_to_tagged_user']['edges']] if 'edge_media_to_tagged_user' in post else []			
+			self.edge_media_to_tagged_user = [Tag(tag['node']['user'], self.shortcode) for tag in post['edge_media_to_tagged_user']['edges']] if 'edge_media_to_tagged_user' in post else []
+		except ValueError:
+			pass
 		except TypeError:
 			pass
 		except IgRequestException as r:

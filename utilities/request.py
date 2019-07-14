@@ -13,6 +13,7 @@ class Request:
 		self.proxies       = parameters_proxy_list
 		self.proxy_index   = -1
 		self.enable_proxy  = enable_proxy
+		self.changed_proxy = 0
 
 		if enable_proxy:
 			print("[%s] Proxies enabled" % (time.strftime('%X')))
@@ -58,8 +59,9 @@ class Request:
 		return choice(_user_agents)
 
 	def select_proxy(self, status=False, error=''):
-		self.proxy_index = random.randint(0, len(self.proxies) - 1)
-		self.proxy       = self.proxies[self.proxy_index]
+		self.proxy_index   = random.randint(0, len(self.proxies) - 1)
+		self.proxy         = self.proxies[self.proxy_index]
+		self.changed_proxy += 1
 		print("[%s]%s%sCurrent proxy: %s:%s Country: %s %s" % (
 			time.strftime('%X'),
 			' ' + str(error) + ' ' if error else ' ',
